@@ -8,15 +8,127 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
+  id          String    @id @default(cuid())
+
+  name        String
+  email       String    @unique
+  password    String
+
+  role        Role      @default(USER)
+
+  orders      Order[]
+  reviews     Review[]
+
+  createdAt   DateTime  @default(now())
 }
 
 enum Role {
   USER
   ADMIN
+}
+
+model Category {
+  id          String      @id @default(cuid())
+
+  name        String
+  slug        String      @unique
+
+  products    Product[]
+
+  createdAt   DateTime    @default(now())
+}
+
+model Product {
+  id                    String          @id @default(cuid())
+
+  title                 String
+  slug                  String          @unique
+
+  description           String
+  shortDescription      String?
+
+  price                 Float
+
+  discountPercentage    Float?          @default(0)
+  discountPrice         Float?
+
+  stock                 Int             @default(0)
+
+  ingredients           String[]
+
+  weight                String?
+
+  isAvailable           Boolean         @default(true)
+  isFeatured            Boolean         @default(false)
+
+  averageRating         Float           @default(0)
+  numReviews            Int             @default(0)
+
+  promotionStartDate    DateTime?
+  promotionEndDate      DateTime?
+
+  categoryId            String
+  category              Category        @relation(fields: [categoryId], references: [id])
+
+  images                ProductImage[]
+
+  reviews               Review[]
+
+  orderItems            OrderItem[]
+
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+}
+
+model ProductImage {
+  id          String      @id @default(cuid())
+
+  url         String
+  public_id   String
+
+  isMain      Boolean     @default(false)
+
+  productId   String
+  product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id          String      @id @default(cuid())
+
+  rating      Int
+  comment     String
+
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+
+  productId   String
+  product     Product     @relation(fields: [productId], references: [id])
+
+  createdAt   DateTime    @default(now())
+}
+
+model Order {
+  id          String        @id @default(cuid())
+
+  totalPrice  Float
+
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+
+  items       OrderItem[]
+
+  createdAt   DateTime      @default(now())
+}
+
+model OrderItem {
+  id          String        @id @default(cuid())
+
+  quantity    Int
+  price       Float
+
+  orderId     String
+  order       Order         @relation(fields: [orderId], references: [id])
+
+  productId   String
+  product     Product       @relation(fields: [productId], references: [id])
 }
