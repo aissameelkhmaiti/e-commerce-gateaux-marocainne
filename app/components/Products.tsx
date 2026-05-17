@@ -126,7 +126,7 @@ export default function ShopPage() {
             </div>
             
             {/* Grille de produits : passe de 2 à 3 colonnes sur écran moyen (md) si besoin, ou reste propre sur mobile */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-2 gap-6">
               {PRODUCTS.map((product) => (
                 <DraggableProduct 
                   key={product.id} 
