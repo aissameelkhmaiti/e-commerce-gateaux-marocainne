@@ -12,17 +12,16 @@ import {
   DragEndEvent,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Scale, CheckCircle2, Plus } from "lucide-react"; // Ajout de l'icône Plus
+import { Scale, CheckCircle2, Plus } from "lucide-react";
 import { Product, useCart } from "../context/CartContext";
 
 const PRODUCTS: Product[] = [
   { id: "p1", name: "Corne de Gazelle", price: 160, image: "https://images.unsplash.com/photo-1551024506-0bccd828d307?q=80&w=400" },
   { id: "p2", name: "Chebakia Miel", price: 80, image: "https://www.lodj.ma/photo/art/grande/56761313-42196923.jpg?v=1622550757" },
   { id: "p3", name: "Ghriba Amande", price: 120, image: "https://patisseriegato.ma/wp-content/uploads/2023/08/chebakia-histoire.webp" },
-  { id: "p4", name: "Briouate Amande", price: 150, image: "https://www.la-cuisine-maroccan.com/photos-recettes/briouates-amandes-miel.jpg" },
+  { id: "p4", name: "Briouate Amande", price: 150, image: "https://www.la-cuisine-marocaine.com/photos-recettes/briouates-amandes-miel.jpg" },
 ];
 
-// Modification ici : acceptation de la fonction de secours pour le clic mobile
 function DraggableProduct({ product, onInstantAdd }: { product: Product; onInstantAdd: (p: Product) => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: product.id,
@@ -31,7 +30,7 @@ function DraggableProduct({ product, onInstantAdd }: { product: Product; onInsta
 
   const style = { 
     transform: CSS.Translate.toString(transform),
-    touchAction: "none" // Crucial pour éviter que le navigateur n'annule le drag sur mobile
+    touchAction: "none"
   };
 
   return (
@@ -40,21 +39,22 @@ function DraggableProduct({ product, onInstantAdd }: { product: Product; onInsta
       style={style}
       {...listeners}
       {...attributes}
-      className={`relative bg-white rounded-3xl p-2 border-2 transition-all duration-300 cursor-grab active:cursor-grabbing group 
+      className={`relative bg-white rounded-3xl p-2 border-2 transition-all duration-300 lg:cursor-grab lg:active:cursor-grabbing group 
         ${isDragging ? "shadow-2xl scale-105 z-50 border-[#c29b40]" : "border-transparent hover:border-[#e8d5b5] shadow-sm"}`}
     >
       <div className="relative h-40 w-full overflow-hidden rounded-2xl">
         <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
         
-        {/* Bouton d'ajout rapide visible UNIQUEMENT sur mobile/tablette */}
+        {/* Bouton d'ajout rapide visible UNIQUEMENT sur mobile/tablette (caché sur lg) */}
         <button
           onClick={(e) => {
-            e.stopPropagation(); // Évite de déclencher le drag par erreur
+            e.stopPropagation(); 
             onInstantAdd(product);
           }}
-          className="absolute bottom-2 right-2 lg:hidden bg-[#c29b40] text-white p-2 rounded-full shadow-lg active:scale-95 transition-transform"
+          className="absolute bottom-2 right-2 lg:hidden bg-[#c29b40] text-white p-2 rounded-full shadow-lg active:scale-95 transition-transform z-10"
           title="Ajouter au panier"
         >
+          
           <Plus size={18} />
         </button>
       </div>
@@ -80,7 +80,7 @@ function DropZone({ isOver }: { isOver: boolean }) {
       </div>
       <div className="mt-6 text-center px-6">
         <h2 className="text-2xl font-serif text-[#5d4037] font-bold">{isOver ? "Lâchez pour ajouter" : "Zone de Pesée"}</h2>
-        <p className="text-[#8b5e34] mt-2 text-sm italic">Glissez vos douceurs ici ou utilisez le bouton + sur mobile</p>
+        <p className="text-[#8b5e34] mt-2 text-sm italic">Glissez vos douceurs ici</p>
       </div>
     </div>
   );
@@ -90,14 +90,13 @@ export default function ShopPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const { addToCart } = useCart();
 
-  // Configuration des capteurs spécifiques pour le web et le mobile
   const sensors = useSensors(
     useSensor(MouseSensor, {
-      activationConstraint: { distance: 10 }, // Évite les drags accidentels au clic
+      activationConstraint: { distance: 10 },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250, // Permet à l'utilisateur de scroller NORMALEMENT. Il doit rester appuyé 250ms pour commencer à dragger.
+        delay: 250,
         tolerance: 5,
       },
     })
@@ -114,26 +113,35 @@ export default function ShopPage() {
   return (
     <div className="min-h-screen bg-[#fdfaf5] p-4 md:p-12 font-sans">
       <DndContext sensors={sensors} onDragStart={(e) => setActiveId(e.active.id as string)} onDragEnd={handleDragEnd}>
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+        {/* Changement ici : grid-cols-1 par défaut, grid-cols-2 uniquement sur grand écran (lg) */}
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          
           <div className="space-y-8">
             <div className="space-y-2">
               <span className="text-[#c29b40] font-bold tracking-[0.2em] uppercase text-xs">Artisanat Marocain</span>
-              <h1 className="text-5xl font-serif text-[#5d4037]">Nos Délices</h1>
-              <p className="text-[#8b5e34] max-w-md">Sélectionnez les meilleures pâtisseries, glissez-les dans la zone de pesée.</p>
+              <h1 className="text-4xl md:text-5xl font-serif text-[#5d4037]">Nos Délices</h1>
+              {/* Le texte s'adapte aussi selon le support */}
+              <p className="text-[#8b5e34] max-w-md hidden lg:block">Sélectionnez les meilleures pâtisseries, glissez-les dans la zone de pesée.</p>
+              <p className="text-[#8b5e34] max-w-md lg:hidden">Sélectionnez vos pâtisseries préférées et ajoutez-les d'un simple clic.</p>
             </div>
-            <div className="grid grid-cols-2 gap-6">
+            
+            {/* Grille de produits : passe de 2 à 3 colonnes sur écran moyen (md) si besoin, ou reste propre sur mobile */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-6">
               {PRODUCTS.map((product) => (
                 <DraggableProduct 
                   key={product.id} 
                   product={product} 
-                  onInstantAdd={addToCart} // Action alternative pour le bouton mobile
+                  onInstantAdd={addToCart} 
                 />
               ))}
             </div>
           </div>
-          <div className="flex flex-col items-center w-full">
+
+          {/* Modification majeure ici : caché sur mobile (hidden) et s'affiche sur grand écran (lg:flex) */}
+          <div className="hidden lg:flex flex-col items-center w-full">
             <DropZone isOver={activeId !== null} />
           </div>
+
         </div>
       </DndContext>
     </div>
