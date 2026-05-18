@@ -6,6 +6,8 @@ import { Cormorant_Garamond, Montserrat } from "next/font/google";
 import "./globals.css";
 
 import { CartProvider } from "./context/CartContext";
+import Navbar from "./components/Navbar"; 
+import Footer from "./components/Footer";
 
 // Police Serif pour les titres
 const cormorant = Cormorant_Garamond({
@@ -38,8 +40,15 @@ export default function RootLayout({
       className={`${cormorant.variable} ${montserrat.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-[#fdfaf5] text-[#5d4037]">
-        {/* PROVIDER PANIER */}
-        <CartProvider>{children}</CartProvider>
+     
+        <CartProvider>
+          
+          <Navbar />
+          
+          
+          <main className="flex-1">{children}</main>
+              <Footer />
+        </CartProvider>
       </body>
     </html>
   );
