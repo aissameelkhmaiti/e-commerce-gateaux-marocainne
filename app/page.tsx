@@ -1,13 +1,16 @@
-import Navbar from "./components/Navbar";
+
 import Hero from "./components/Hero";
 import DragWrapper from "./components/DragWrapper";
-import Footer from "./components/Footer";
+import ServicesSection from "./components/Services";
+ 
 export default function Home() {
   return (
     <div>
       
       <Hero />
+      <ServicesSection />
       <DragWrapper />
+    
       
   
     </div>

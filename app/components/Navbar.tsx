@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X, ShoppingCart } from "lucide-react";
+import { Menu, X, ShoppingCart, User } from "lucide-react"; // Ajout de User
 import { useCart } from "../context/CartContext";
 import CartDrawer from "./CartDrawer";
 import {
@@ -20,7 +20,6 @@ export default function Navbar() {
   const navLinks = [
     { name: "Accueil", href: "/" },
     { name: "Nos Créations", href: "/creations" },
-    { name: "Coffrets", href: "/coffrets" },
     { name: "Sur Mesure", href: "/custom" },
     { name: "Contact", href: "/contact" },
   ];
@@ -30,7 +29,6 @@ export default function Navbar() {
       opacity: 0,
       height: 0,
     },
-
     visible: {
       opacity: 1,
       height: "auto",
@@ -39,7 +37,6 @@ export default function Navbar() {
         ease: [0.42, 0, 0.58, 1],
       },
     },
-
     exit: {
       opacity: 0,
       height: 0,
@@ -87,7 +84,6 @@ export default function Navbar() {
                 <h1 className="text-lg md:text-2xl font-serif font-bold text-[#5d4037] leading-tight">
                   ALLO <span className="text-[#c29b40]">LHALAWA</span>
                 </h1>
-
                 <span className="text-[8px] md:text-[10px] uppercase tracking-[0.15em] text-[#8b5e34] font-medium">
                   Pâtisserie MAROCAINE
                 </span>
@@ -109,7 +105,16 @@ export default function Navbar() {
             </ul>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 md:gap-6">
+            <div className="flex items-center gap-2 md:gap-4">
+
+              {/* Icone Compte / Login */}
+              <Link
+                href="/login"
+                className="group p-2 text-[#5d4037] hover:bg-[#8b5e34]/5 rounded-full transition-all"
+                title="Mon compte"
+              >
+                <User className="w-5 h-5 md:w-6 md:h-6 group-hover:text-[#c29b40] transition-colors" />
+              </Link>
 
               {/* Panier */}
               <button
@@ -166,10 +171,7 @@ export default function Navbar() {
                       onClick={() => setIsMenuOpen(false)}
                     >
                       {link.name}
-
-                      <span className="text-[#c29b40] text-xl">
-                        ›
-                      </span>
+                      <span className="text-[#c29b40] text-xl">›</span>
                     </Link>
                   </li>
                 ))}
