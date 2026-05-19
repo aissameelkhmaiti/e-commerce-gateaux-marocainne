@@ -3,6 +3,7 @@
 import { X, Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { motion, AnimatePresence } from "framer-motion"; // Importation de Framer Motion
+import { useRouter } from "next/navigation"; // 1. Importation du routeur Next.js
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -11,6 +12,13 @@ interface CartDrawerProps {
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { cartItems, removeFromCart, updateQuantity, total } = useCart();
+  const router = useRouter(); // 2. Initialisation du routeur
+
+  // 3. Fonction pour gérer la redirection
+  const handleCheckout = () => {
+    onClose(); // Ferme le panier
+    router.push("/checkout"); // Redirige vers la page de paiement (adaptez le chemin si nécessaire, ex: /panier ou /payment)
+  };
 
   return (
     <AnimatePresence>
@@ -119,7 +127,12 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     {total.toFixed(2)} DH
                   </motion.span>
                 </div>
-                <button className="w-full bg-[#8b5e34] hover:bg-[#5d4037] text-white py-4 rounded-sm flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-sm font-bold active:scale-[0.99]">
+                
+                {/* 4. Ajout du onClick sur le bouton */}
+                <button 
+                  onClick={handleCheckout}
+                  className="w-full bg-[#8b5e34] hover:bg-[#5d4037] text-white py-4 rounded-sm flex items-center justify-center gap-3 transition-all uppercase tracking-widest text-sm font-bold active:scale-[0.99]"
+                >
                   Finaliser la commande <ArrowRight size={18} />
                 </button>
               </div>

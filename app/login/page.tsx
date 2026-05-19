@@ -121,7 +121,7 @@ export default function LoginPage() {
           {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-[#8b5e34] hover:bg-[#5d4037] text-white py-3.5 rounded-lg flex items-center justify-center gap-3 transition-colors duration-300 uppercase tracking-widest text-xs font-bold shadow-sm"
+            className="w-full bg-[#c29b40] hover:bg-[#201b0e] text-white py-3.5 rounded-lg flex items-center justify-center gap-3 transition-colors duration-300 uppercase tracking-widest text-xs font-bold shadow-sm"
           >
             {isRegister ? "S'inscrire" : "Connexion"}{" "}
             <ArrowRight size={14} />

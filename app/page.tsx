@@ -10,9 +10,7 @@ export default function Home() {
       <Hero />
       <ServicesSection />
       <DragWrapper />
-    
-      
-  
+
     </div>
   );
 }
