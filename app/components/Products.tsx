@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   DndContext,
   useDraggable,
@@ -15,55 +16,34 @@ import {
 } from "@dnd-kit/core";
 
 import { CSS } from "@dnd-kit/utilities";
-
-import {
-  Scale,
-  CheckCircle2,
-  Plus,
-} from "lucide-react";
-
-import {
-  motion,
-  AnimatePresence,
-  Variants,
-} from "framer-motion";
-
-import {
-  Product,
-  useCart,
-} from "../context/CartContext";
+import { Scale, CheckCircle2, Plus, ShoppingCart } from "lucide-react";
+import { motion, AnimatePresence, Variants } from "framer-motion";
+import { Product, useCart } from "../context/CartContext";
 
 const PRODUCTS: Product[] = [
   {
     id: "p1",
     name: "Corne de Gazelle",
     price: 160,
-    image:
-      "https://images.unsplash.com/photo-1551024506-0bccd828d307?q=80&w=400",
+    image: "https://images.unsplash.com/photo-1551024506-0bccd828d307?q=80&w=400",
   },
-
   {
     id: "p2",
     name: "Chebakia Miel",
     price: 80,
-    image:
-      "https://www.lodj.ma/photo/art/grande/56761313-42196923.jpg?v=1622550757",
+    image: "https://www.lodj.ma/photo/art/grande/56761313-42196923.jpg?v=1622550757",
   },
-
   {
     id: "p3",
     name: "Ghriba Amande",
     price: 120,
-    image:
-      "https://patisseriegato.ma/wp-content/uploads/2023/08/chebakia-histoire.webp",
+    image: "https://patisseriegato.ma/wp-content/uploads/2023/08/chebakia-histoire.webp",
   },
-
   {
     id: "p4",
     name: "Briouate Amande",
     price: 150,
-    image:
-      "https://www.la-cuisine-marocaine.com/photos-recettes/briouates-amandes-miel.jpg",
+    image: "https://www.la-cuisine-marocaine.com/photos-recettes/briouates-amandes-miel.jpg",
   },
 ];
 
@@ -82,6 +62,8 @@ function ProductCard({
   onInstantAdd,
   isOverlay = false,
 }: ProductCardProps) {
+  const router = useRouter();
+
   return (
     <motion.div
       whileHover={
@@ -104,7 +86,12 @@ function ProductCard({
         stiffness: 400,
         damping: 30,
       }}
-      className={`relative bg-white rounded-3xl p-2 border-2 transition-colors duration-300 group ${
+      onClick={() => {
+        if (!isOverlay) {
+          router.push(`/creations/${product.id}`);
+        }
+      }}
+      className={`relative bg-white rounded-3xl p-2 border-2 transition-colors duration-300 group cursor-pointer ${
         isOverlay
           ? "shadow-2xl scale-105 border-[#c29b40] pointer-events-none w-72"
           : "border-transparent hover:border-[#e8d5b5] shadow-sm"
@@ -117,6 +104,7 @@ function ProductCard({
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
 
+        {/* Bouton mobile */}
         {!isOverlay && (
           <motion.button
             whileTap={{ scale: 0.9 }}
@@ -130,10 +118,29 @@ function ProductCard({
             <Plus size={18} />
           </motion.button>
         )}
+
+        {/* Bouton desktop (au survol) */}
+        {!isOverlay && (
+          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden lg:flex items-center justify-center z-10">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onInstantAdd(product);
+              }}
+              className="bg-[#c29b40] hover:bg-[#a88232] text-white p-3 rounded-full shadow-xl flex items-center justify-center gap-2 font-medium text-xs uppercase tracking-wider"
+              title="Ajouter directement"
+            >
+              <ShoppingCart size={16} />
+              <span>Acheter</span>
+            </motion.button>
+          </div>
+        )}
       </div>
 
       <div className="mt-3 px-2 pb-2 text-center">
-        <h3 className="font-serif text-[#5d4037] font-bold text-sm uppercase tracking-wide">
+        <h3 className="font-serif text-[#5d4037] font-bold text-sm uppercase tracking-wide group-hover:text-[#c29b40] transition-colors">
           {product.name}
         </h3>
 
@@ -179,11 +186,9 @@ function DraggableProduct({
       opacity: 0,
       y: 20,
     },
-
     visible: {
       opacity: 1,
       y: 0,
-
       transition: {
         delay: index * 0.1,
         type: "spring",
@@ -228,11 +233,9 @@ function DropZone() {
       ref={setNodeRef}
       animate={{
         borderColor: isOver ? "#c29b40" : "#e8d5b5",
-
         backgroundColor: isOver
           ? "rgba(194, 155, 64, 0.1)"
           : "rgba(255, 255, 255, 0.4)",
-
         scale: isOver ? 1.03 : 1,
       }}
       transition={{
@@ -245,18 +248,9 @@ function DropZone() {
       <motion.div
         animate={{
           scale: isOver ? 1.15 : 1,
-
-          rotate: isOver
-            ? [0, -10, 10, 0]
-            : 0,
-
-          backgroundColor: isOver
-            ? "#c29b40"
-            : "#ffffff",
-
-          color: isOver
-            ? "#ffffff"
-            : "#8b5e34",
+          rotate: isOver ? [0, -10, 10, 0] : 0,
+          backgroundColor: isOver ? "#c29b40" : "#ffffff",
+          color: isOver ? "#ffffff" : "#8b5e34",
         }}
         transition={{
           rotate: isOver
@@ -268,7 +262,6 @@ function DropZone() {
             : {
                 duration: 0.3,
               },
-
           default: {
             type: "spring",
             stiffness: 300,
@@ -296,20 +289,14 @@ function DropZone() {
               duration: 0.2,
             }}
           >
-            {isOver ? (
-              <CheckCircle2 size={48} />
-            ) : (
-              <Scale size={48} />
-            )}
+            {isOver ? <CheckCircle2 size={48} /> : <Scale size={48} />}
           </motion.div>
         </AnimatePresence>
       </motion.div>
 
       <div className="mt-6 text-center px-6">
         <h2 className="text-2xl font-serif text-[#5d4037] font-bold">
-          {isOver
-            ? "Lâchez pour ajouter"
-            : "Zone de Pesée"}
+          {isOver ? "Lâchez pour ajouter" : "Zone de Pesée"}
         </h2>
 
         <p className="text-[#8b5e34] mt-2 text-sm italic">
@@ -325,9 +312,7 @@ function DropZone() {
 ========================= */
 
 export default function ShopPage() {
-  const [activeProduct, setActiveProduct] =
-    useState<Product | null>(null);
-
+  const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const { addToCart } = useCart();
 
   const sensors = useSensors(
@@ -336,7 +321,6 @@ export default function ShopPage() {
         distance: 10,
       },
     }),
-
     useSensor(TouchSensor, {
       activationConstraint: {
         delay: 250,
@@ -345,23 +329,15 @@ export default function ShopPage() {
     })
   );
 
-  const handleDragStart = (
-    event: DragStartEvent
-  ) => {
-    setActiveProduct(
-      event.active.data.current as Product
-    );
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveProduct(event.active.data.current as Product);
   };
 
-  const handleDragEnd = (
-    event: DragEndEvent
-  ) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { over, active } = event;
 
     if (over && over.id === "cart-zone") {
-      addToCart(
-        active.data.current as Product
-      );
+      addToCart(active.data.current as Product);
     }
 
     setActiveProduct(null);
@@ -375,7 +351,7 @@ export default function ShopPage() {
         onDragEnd={handleDragEnd}
       >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-
+          
           {/* LEFT */}
           <div className="space-y-8">
             <motion.div
@@ -402,13 +378,11 @@ export default function ShopPage() {
               </h1>
 
               <p className="text-[#8b5e34] max-w-md hidden lg:block">
-                Sélectionnez les meilleures pâtisseries,
-                glissez-les dans la zone de pesée.
+                Sélectionnez les meilleures pâtisseries, glissez-les dans la zone de pesée ou cliquez pour voir les détails.
               </p>
 
               <p className="text-[#8b5e34] max-w-md lg:hidden">
-                Sélectionnez vos pâtisseries préférées et
-                ajoutez-les d'un simple clic.
+                Sélectionnez vos pâtisseries préférées et ajoutez-les d'un simple clic.
               </p>
             </motion.div>
 
@@ -447,8 +421,7 @@ export default function ShopPage() {
         <DragOverlay
           dropAnimation={{
             duration: 250,
-            easing:
-              "cubic-bezier(0.16, 1, 0.3, 1)",
+            easing: "cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         >
           {activeProduct ? (

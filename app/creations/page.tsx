@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   DndContext,
   useDraggable,
@@ -10,10 +11,20 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-// 1. Ajout de l'icône Search
-import { Scale, CheckCircle2, Plus, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import {
+  Scale,
+  CheckCircle2,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  ShoppingCart,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Product, useCart } from "../context/CartContext";
 
 interface StoreProduct extends Product {
@@ -37,15 +48,100 @@ const ALL_PRODUCTS: StoreProduct[] = [
 
 const ITEMS_PER_PAGE = 4;
 
+/* ==========================================================================
+   Composant Carte Produit (Avec Redirection & Bouton d'Achat Direct)
+   ========================================================================== */
+interface ProductCardProps {
+  product: Product;
+  onInstantAdd: (p: Product) => void;
+  isOverlay?: boolean;
+}
+
+function ProductCard({ product, onInstantAdd, isOverlay = false }: ProductCardProps) {
+  const router = useRouter();
+
+  return (
+    <motion.div
+      whileHover={!isOverlay ? { scale: 1.02, y: -4 } : {}}
+      whileTap={!isOverlay ? { scale: 0.98 } : {}}
+      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      onClick={() => {
+        if (!isOverlay) {
+          router.push(`/creations/${product.id}`);
+        }
+      }}
+      className={`relative bg-white rounded-3xl p-2 border-2 transition-colors duration-300 group cursor-pointer ${
+        isOverlay
+          ? "shadow-2xl scale-105 border-[#c29b40] pointer-events-none w-64"
+          : "border-transparent hover:border-[#e8d5b5] shadow-sm"
+      }`}
+    >
+      <div className="relative h-40 w-full overflow-hidden rounded-2xl bg-gray-50">
+        <img
+          src={product.image}
+          alt={product.name}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+
+        {/* Bouton Mobile Action Directe */}
+        {!isOverlay && (
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onInstantAdd(product);
+            }}
+            className="absolute bottom-2 right-2 lg:hidden bg-[#c29b40] text-white p-2 rounded-full shadow-lg z-10"
+            title="Ajouter au panier"
+          >
+            <Plus size={18} />
+          </motion.button>
+        )}
+
+        {/* Bouton Desktop Action Directe (Affiché au survol) */}
+        {!isOverlay && (
+          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden lg:flex items-center justify-center z-10">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onInstantAdd(product);
+              }}
+              className="bg-[#c29b40] hover:bg-[#a88232] text-white p-3 rounded-full shadow-xl flex items-center justify-center gap-2 font-medium text-xs uppercase tracking-wider"
+              title="Ajouter au panier"
+            >
+              <ShoppingCart size={16} />
+              <span>Acheter</span>
+            </motion.button>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 px-2 pb-2 text-center">
+        <h3 className="font-serif text-[#5d4037] font-bold text-sm uppercase tracking-wide truncate group-hover:text-[#c29b40] transition-colors">
+          {product.name}
+        </h3>
+        <p className="text-[#8b5e34] font-medium text-xs mt-1">
+          {product.price} DH / Kg
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ==========================================================================
+   Composant Enveloppe Draggable
+   ========================================================================== */
 function DraggableProduct({ product, onInstantAdd }: { product: Product; onInstantAdd: (p: Product) => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: product.id,
     data: product,
   });
 
-  const style = { 
+  const style = {
     transform: CSS.Translate.toString(transform),
-    touchAction: "none"
+    touchAction: "none" as const,
   };
 
   return (
@@ -54,57 +150,77 @@ function DraggableProduct({ product, onInstantAdd }: { product: Product; onInsta
       style={style}
       {...listeners}
       {...attributes}
-      className={`relative bg-white rounded-3xl p-2 border-2 transition-all duration-300 lg:cursor-grab lg:active:cursor-grabbing group 
-        ${isDragging ? "shadow-2xl scale-105 z-50 border-[#c29b40]" : "border-transparent hover:border-[#e8d5b5] shadow-sm"}`}
+      className={`lg:cursor-grab lg:active:cursor-grabbing ${isDragging ? "opacity-30" : ""}`}
     >
-      <div className="relative h-40 w-full overflow-hidden rounded-2xl bg-gray-100">
-        <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-        <button
-          onClick={(e) => {
-            e.stopPropagation(); 
-            onInstantAdd(product);
-          }}
-          className="absolute bottom-2 right-2 lg:hidden bg-[#c29b40] text-white p-2 rounded-full shadow-lg active:scale-95 transition-transform z-10"
-          title="Ajouter au panier"
-        >
-          <Plus size={18} />
-        </button>
-      </div>
-      <div className="mt-3 px-2 pb-2 text-center">
-        <h3 className="font-serif text-[#5d4037] font-bold text-sm uppercase tracking-wide truncate">{product.name}</h3>
-        <p className="text-[#8b5e34] font-medium text-xs mt-1">{product.price} DH / Kg</p>
-      </div>
+      <ProductCard product={product} onInstantAdd={onInstantAdd} />
     </div>
   );
 }
 
-function DropZone({ isOver }: { isOver: boolean }) {
-  const { setNodeRef } = useDroppable({ id: "cart-zone" });
+/* ==========================================================================
+   Composant Zone de Dépôt (DropZone)
+   ========================================================================== */
+function DropZone() {
+  const { setNodeRef, isOver } = useDroppable({
+    id: "cart-zone",
+  });
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
-      className={`relative h-[300px] lg:h-[400px] w-full rounded-[2.5rem] border-4 border-dashed flex flex-col items-center justify-center transition-all duration-500
-        ${isOver ? "border-[#c29b40] bg-[#c29b40]/10" : "border-[#e8d5b5] bg-white/40"}`}
+      animate={{
+        borderColor: isOver ? "#c29b40" : "#e8d5b5",
+        backgroundColor: isOver ? "rgba(194, 155, 64, 0.1)" : "rgba(255, 255, 255, 0.4)",
+        scale: isOver ? 1.03 : 1,
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="relative h-[300px] lg:h-[400px] w-full rounded-[2.5rem] border-4 border-dashed flex flex-col items-center justify-center"
     >
-      <div className={`p-8 rounded-full transition-all duration-500 ${isOver ? "bg-[#c29b40] text-white" : "bg-white text-[#8b5e34] shadow-xl"}`}>
-        {isOver ? <CheckCircle2 size={48} /> : <Scale size={48} />}
-      </div>
+      <motion.div
+        animate={{
+          scale: isOver ? 1.15 : 1,
+          rotate: isOver ? [0, -10, 10, 0] : 0,
+          backgroundColor: isOver ? "#c29b40" : "#ffffff",
+          color: isOver ? "#ffffff" : "#8b5e34",
+        }}
+        transition={{
+          rotate: isOver ? { repeat: Infinity, duration: 1.5, ease: "linear" } : { duration: 0.3 },
+          default: { type: "spring", stiffness: 300, damping: 20 },
+        }}
+        className="p-8 rounded-full shadow-xl"
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={isOver ? "checked" : "scale"}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            transition={{ duration: 0.15 }}
+          >
+            {isOver ? <CheckCircle2 size={48} /> : <Scale size={48} />}
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
+
       <div className="mt-6 text-center px-6">
-        <h2 className="text-2xl font-serif text-[#5d4037] font-bold">{isOver ? "Lâchez pour ajouter" : "Zone de Pesée"}</h2>
+        <h2 className="text-2xl font-serif text-[#5d4037] font-bold">
+          {isOver ? "Lâchez pour ajouter" : "Zone de Pesée"}
+        </h2>
         <p className="text-[#8b5e34] mt-2 text-sm italic">Glissez vos douceurs ici</p>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
+/* ==========================================================================
+   Composant Principal (ShopPage)
+   ========================================================================== */
 export default function ShopPage() {
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  // 2. Nouvel état pour la saisie de recherche
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("" );
   const [currentPage, setCurrentPage] = useState<number>(1);
-  
+
   const { addToCart } = useCart();
 
   const sensors = useSensors(
@@ -112,7 +228,6 @@ export default function ShopPage() {
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   );
 
-  // 3. Filtrage combiné (Catégorie + Recherche textuelle)
   const filteredProducts = useMemo(() => {
     return ALL_PRODUCTS.filter((product) => {
       const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
@@ -126,43 +241,55 @@ export default function ShopPage() {
     setCurrentPage(1);
   };
 
-  // Gestion du changement de texte (remet aussi la pagination à la page 1)
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1);
   };
 
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
-  
+
   const paginatedProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredProducts, currentPage]);
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveProduct(event.active.data.current as Product);
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { over, active } = event;
     if (over && over.id === "cart-zone") {
       addToCart(active.data.current as Product);
     }
-    setActiveId(null);
+    setActiveProduct(null);
   };
 
   return (
-    <div className="min-h-screen bg-[#fdfaf5] p-4 md:p-12 font-sans">
-      <DndContext sensors={sensors} onDragStart={(e) => setActiveId(e.active.id as string)} onDragEnd={handleDragEnd}>
+    <div className="min-h-screen bg-[#fdfaf5] p-4 md:p-12 font-sans select-none overflow-x-hidden">
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
           
-          {/* Section de gauche : Catalogue de produits */}
+          {/* Section de gauche : Catalogue */}
           <div className="space-y-8">
-            {/* En-tête */}
             <div className="space-y-2">
-              <span className="text-[#c29b40] font-bold tracking-[0.2em] uppercase text-xs">Artisanat Marocain</span>
+              <span className="text-[#c29b40] font-bold tracking-[0.2em] uppercase text-xs">
+                Artisanat Marocain
+              </span>
               <h1 className="text-4xl md:text-5xl font-serif text-[#5d4037]">Nos Délices</h1>
-              <p className="text-[#8b5e34] max-w-md hidden lg:block">Sélectionnez les meilleures pâtisseries, glissez-les dans la zone de pesée.</p>
-              <p className="text-[#8b5e34] max-w-md lg:hidden">Sélectionnez vos pâtisseries préférées et ajoutez-les d'un simple clic.</p>
+              <p className="text-[#8b5e34] max-w-md hidden lg:block">
+                Sélectionnez les meilleures pâtisseries, glissez-les dans la zone de pesée ou cliquez pour voir les détails.
+              </p>
+              <p className="text-[#8b5e34] max-w-md lg:hidden">
+                Sélectionnez vos pâtisseries préférées et ajoutez-les d'un simple clic.
+              </p>
             </div>
 
-            {/* 4. Barre de Recherche UI */}
+            {/* Barre de Recherche */}
             <div className="relative w-full max-w-md">
               <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-[#8b5e34]">
                 <Search size={18} />
@@ -188,23 +315,25 @@ export default function ShopPage() {
                   key={tab.id}
                   onClick={() => handleCategoryChange(tab.id)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300
-                    ${selectedCategory === tab.id 
-                      ? "bg-[#5d4037] text-[#fdfaf5] shadow-md" 
-                      : "text-[#8b5e34] hover:bg-[#e8d5b5]/30"}`}
+                    ${
+                      selectedCategory === tab.id
+                        ? "bg-[#5d4037] text-[#fdfaf5] shadow-md"
+                        : "text-[#8b5e34] hover:bg-[#e8d5b5]/30"
+                    }`}
                 >
                   {tab.label}
                 </button>
               ))}
             </div>
-            
-            {/* Grille des produits filtrés et paginés */}
+
+            {/* Grille des produits */}
             {paginatedProducts.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-6">
                 {paginatedProducts.map((product) => (
-                  <DraggableProduct 
-                    key={product.id} 
-                    product={product} 
-                    onInstantAdd={addToCart} 
+                  <DraggableProduct
+                    key={product.id}
+                    product={product}
+                    onInstantAdd={addToCart}
                   />
                 ))}
               </div>
@@ -214,7 +343,7 @@ export default function ShopPage() {
               </div>
             )}
 
-            {/* Pagination Controls */}
+            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-center space-x-2 pt-4">
                 <button
@@ -224,15 +353,17 @@ export default function ShopPage() {
                 >
                   <ChevronLeft size={20} />
                 </button>
-                
+
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
                     className={`w-9 h-9 rounded-full text-sm font-semibold transition-all
-                      ${currentPage === page 
-                        ? "bg-[#c29b40] text-white shadow-sm" 
-                        : "bg-white border border-[#e8d5b5] text-[#8b5e34] hover:bg-[#e8d5b5]/20"}`}
+                      ${
+                        currentPage === page
+                          ? "bg-[#c29b40] text-white shadow-sm"
+                          : "bg-white border border-[#e8d5b5] text-[#8b5e34] hover:bg-[#e8d5b5]/20"
+                      }`}
                   >
                     {page}
                   </button>
@@ -249,12 +380,23 @@ export default function ShopPage() {
             )}
           </div>
 
-          {/* Section de droite */}
+          {/* Section de droite : DropZone fixe */}
           <div className="hidden lg:flex flex-col items-center w-full lg:sticky lg:top-12">
-            <DropZone isOver={activeId !== null} />
+            <DropZone />
           </div>
-
         </div>
+
+        {/* Rendu fluide de l'élément pendant le Drag & Drop */}
+        <DragOverlay
+          dropAnimation={{
+            duration: 250,
+            easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+        >
+          {activeProduct ? (
+            <ProductCard product={activeProduct} onInstantAdd={addToCart} isOverlay={true} />
+          ) : null}
+        </DragOverlay>
       </DndContext>
     </div>
   );
